@@ -85,15 +85,16 @@ def consultar_saldo(endereco: str):
 
 # No main.py, adicione esta rota:
 @app.post("/nft/criar")
-def criar_nft(texto: str):
-    # Um NFT na nossa rede será um bloco que contém uma mensagem especial imutável
-    minha_blockchain.transacoes_pendentes.append({"tipo": "NFT", "conteudo": texto})
-    minha_blockchain.minerar_pendencias(MEU_ENDERECO)
-    return {"mensagem": "NFT gravado na eternidade da blockchain!", "bloco": minha_blockchain.ultimo_bloco().indice}
-
-class NFTInput(BaseModel):
-    mensagem: str
-
+def criar_nft(dados: NFTInput):
+    try:
+        minha_blockchain.minerar_pendencias(MEU_ENDERECO, nft_data=dados.mensagem)
+        return {
+            "mensagem": "NFT registrado com sucesso!",
+            "bloco": minha_blockchain.ultimo_bloco().indice,
+            "conteudo": dados.mensagem
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 @app.post("/nft/criar")
 def criar_nft(dados: NFTInput):
     # Ao criar um NFT, mineramos um bloco imediatamente com essa mensagem
