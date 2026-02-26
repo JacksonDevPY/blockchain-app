@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Minha Blockchain Wallet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<div class="bg-yellow-600 text-white text-center py-2 text-sm font-bold uppercase tracking-widest">
+    ⚠️ Ambiente Acadêmico de Testes: As moedas (COINS) não possuem valor real ou comercial.
+</div>
+<body class="bg-gray-900 text-white font-sans">
+    <div class="container mx-auto p-8">
+        <h1 class="text-4xl font-bold mb-8 border-b border-blue-500 pb-2">Blockchain Dashboard</h1>
+
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg border border-purple-500">
+    <h2 class="text-xl font-semibold mb-4 text-purple-400">Fábrica de NFT</h2>
+    <input id="nftMensagem" type="text" placeholder="Sua mensagem eterna..." class="w-full mb-3 p-2 bg-gray-700 rounded border border-gray-600">
+    <button onclick="criarNFT()" class="w-full bg-purple-600 hover:bg-purple-700 py-3 rounded-md font-bold transition">CUNHAR NFT</button>
+    
+    <div id="galeriaNFT" class="mt-4 space-y-2">
+        </div>
+</div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700">
+                <h2 class="text-xl font-semibold mb-4">Minha Carteira</h2>
+                <div class="mb-4">
+                    <p class="text-gray-400">Endereço:</p>
+                    <p class="text-xs break-all text-blue-300" id="meuEndereco">endereco-do-meu-servidor</p>
+                </div>
+                <div class="mb-6">
+                    <p class="text-gray-400">Saldo Atual:</p>
+                    <p class="text-3xl font-bold" id="saldo">0.00 <span class="text-sm text-blue-400">COINS</span></p>
+                </div>
+                <button onclick="minerar()" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-md font-bold transition">MINERAR BLOCO</button>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700">
+                <h2 class="text-xl font-semibold mb-4">Enviar Moedas</h2>
+                <input id="destinatario" type="text" placeholder="Endereço de destino" class="w-full mb-3 p-2 bg-gray-700 rounded border border-gray-600 focus:outline-none">
+                <input id="quantidade" type="number" placeholder="Quantidade" class="w-full mb-3 p-2 bg-gray-700 rounded border border-gray-600">
+                <button onclick="enviarTransacao()" class="w-full bg-green-600 hover:bg-green-700 py-3 rounded-md font-bold transition">ENVIAR</button>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700">
+                <h2 class="text-xl font-semibold mb-4">Atividade da Rede</h2>
+                <div id="logs" class="text-sm text-green-400 h-48 overflow-y-auto font-mono">
+                    > Conectado à rede...<br>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000";
+
+        async function atualizarDados() {
+            try {
+                const endereco = document.getElementById('meuEndereco').innerText;
+                const res = await axios.get(`${API_URL}/saldo/${endereco}`);
+                document.getElementById('saldo').innerText = res.data.saldo.toFixed(2) + " COINS";
+            } catch (err) { console.error("Erro ao carregar dados"); }
+        }
+
+        async function minerar() {
+            log("Iniciando mineração...");
+            const res = await axios.get(`${API_URL}/minerar`);
+            log(res.data.mensagem);
+            atualizarDados();
+        }
+
+        async function enviarTransacao() {
+            const dest = document.getElementById('destinatario').value;
+            const quant = parseFloat(document.getElementById('quantidade').value);
+            
+            try {
+                await axios.post(`${API_URL}/transacao/nova`, {
+                    remetente: "endereco-do-meu-servidor",
+                    destinatario: dest,
+                    quantidade: quant,
+                    chave_privada: "minha-chave-secreta"
+                });
+                log(`Transação de ${quant} enviada para fila!`);
+            } catch (err) { log("Erro: Saldo insuficiente ou dados inválidos."); }
+        }
+
+        function log(msg) {
+            const l = document.getElementById('logs');
+            l.innerHTML += `> ${msg}<br>`;
+            l.scrollTop = l.scrollHeight;
+        }
+
+        // Loop de atualização
+        setInterval(atualizarDados, 5000);
+        atualizarDados();
+
+        async function criarNFT() {
+    const msg = document.getElementById('nftMensagem').value;
+    if(!msg) return alert("Digite algo!");
+    
+    log("Cunhando NFT...");
+    try {
+        const res = await axios.post(`${API_URL}/nft/criar`, { mensagem: msg });
+        log("NFT Criado no Bloco " + res.data.bloco);
+        
+        const galeria = document.getElementById('galeriaNFT');
+        galeria.innerHTML += `<div class="bg-gray-700 p-2 rounded text-xs border-l-4 border-purple-500">
+            <b>Bloco #${res.data.bloco}:</b> ${res.data.conteudo}
+        </div>`;
+        
+        document.getElementById('nftMensagem').value = "";
+        atualizarDados();
+    } catch (err) { log("Erro ao criar NFT"); }
+}
+    </script>
+</body>
+</html>
